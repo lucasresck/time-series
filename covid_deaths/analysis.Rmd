@@ -1,0 +1,198 @@
+---
+title: "analysis"
+output: html_notebook
+---
+
+We will do an analysis of the dataset first, and next we will answer some predefined questions.
+
+Import data:
+
+```{r}
+full <- readxl::read_xlsx('covidrj.xlsx', progress = FALSE)
+mortes <- diff(full$deaths)
+plot(mortes, main = 'Deaths')
+```
+
+# Trend
+
+We will now model $Z(t) = T(t) + a_t$.
+
+##  Linear model
+
+```{r}
+t = c(1:length(mortes))
+deaths = data.frame(mortes = mortes, t = t)
+mod = lm(mortes ~ t, data=deaths)
+summary(mod)
+plot(deaths$t, deaths$mortes, main = 'Linear model')
+abline(mod$coefficients)
+plot(mod$residuals, main = 'Residuals of the linear model')
+```
+
+It seems not a good a idea.
+
+## Polynomial model
+
+```{r}
+mod = lm(mortes ~ poly(t, 2), data = deaths)
+summary(mod)
+prediction = predict(mod, data.frame(deaths$t))
+plot(deaths$mortes, main = 'Polynomial model')
+lines(prediction)
+plot(mod$residuals, main = 'Residuals of the polynomial model')
+```
+
+We see better results.
+
+## Moving average
+
+```{r}
+w1 = filter(x = deaths$mortes, filter = rep(1/7, 7), sides = 2)
+w2 = filter(x = deaths$mortes, filter = rep(1/14, 14), sides = 2)
+w3 = filter(x = deaths$mortes, filter = rep(1/39, 30), sides = 2)
+plot(deaths$mortes, main = 'Moving average')
+lines(w1, col='red')
+lines(w2, col='blue')
+lines(w3, col='green')
+legend(
+  x = 0,
+  y = 300,
+  legend = c('Data', 'w1', 'w2', 'w3'), 
+  col = c('black', 'red', 'blue', 'green'),
+  pch = c('o', '', '', ''),
+  lty = c(0, 1, 1, 1)
+)
+```
+
+## LOWESS
+
+```{r}
+lw1 = lowess(x = deaths$mortes, f=0.5)
+lw2 = lowess(x = deaths$mortes, f=0.2)
+plot(deaths$mortes, main = 'LOWESS')
+lines(lw1, col='red')
+lines(lw2, col='blue')
+legend(
+  x = 0,
+  y = 300,
+  legend = c('Data', 'lw1', 'lw2'), 
+  col = c('black', 'red', 'blue'),
+  pch = c('o', '', ''),
+  lty = c(0, 1, 1)
+)
+```
+
+## Differentiation and ACF
+
+```{r}
+dz = diff(deaths$mortes, lag = 1)
+plot(dz, main = 'Differentiation')
+acf(x = dz)
+acf(deaths$mortes)
+```
+
+Diff is a good idea.
+
+## Trend test
+
+```{r}
+library(randtests)
+runs.test(x = deaths$mortes, alternative = "two.sided", plot = TRUE)
+```
+
+# Seasonality
+
+We will now model $Z(t) = T(t) + S(t) + a_t$.
+
+## Deterministic seasonality
+
+```{r}
+# Seasonal dummies
+N = length(deaths$mortes)
+Q = factor(c(rep(c(1:7), N/7), c(1:(N%%7))))
+deaths$Q = Q
+mod = lm(mortes ~ t+Q, data = deaths)
+summary(mod)
+plot(deaths$mortes, main = "Seasonality")
+lines(mod$fitted.values)
+```
+
+## Log scale (multiplicative)
+
+```{r}
+index = deaths$mortes != 0
+mod = lm(log(mortes[index]) ~ t[index]+Q[index], data = deaths)
+summary(mod)
+plot(deaths$mortes, main = "Seasonality (multiplicative)")
+lines(exp(mod$fitted.values))
+```
+
+Better in logarithmic scale.
+
+## Stochastic seasonality
+
+```{r}
+trend = filter(deaths$mortes, sides = 2, filter = rep(1/7, 7))
+mod = lm(mortes ~ Q-1, data=deaths)
+summary(mod)
+S = mod$fitted.values
+plot(deaths$mortes)
+plot(trend)
+plot(S)
+plot(deaths$mortes - trend - S)
+```
+
+## Decompose
+
+```{r}
+plot(decompose(ts(deaths$mortes, frequency = 7)))
+```
+
+## LOWESS
+
+```{r}
+plot(stl(ts(deaths$mortes, frequency = 7), s.window = 7))
+```
+
+## Kruskal-Wallis
+
+```{r}
+trend = decompose(ts(deaths$mortes, frequency = 7))$trend
+deaths$detrended = deaths$mortes - trend
+kruskal.test(detrended ~ Q, data = deaths)
+```
+
+We reject the hypothesis of non seasonality.
+
+## Analysis of variance
+
+```{r}
+mod <- lm(detrended~Q-1, na.action = na.omit, data = deaths)
+summary(mod)
+```
+
+## Questions
+
+1. Is the series stationary?
+
+Clearly we see we have trend and seasonality, so it's not stationary.
+
+2. Is there some seasonality?
+
+Sure! All seasonality models show some pattern. Some of them have coefficients significative (greater than 0 with high p-value). We also did a Kruskal-Wallis and rejected the null hypothesis of non stationarity.
+
+3. Is there some trend?
+
+There is a trend. All models shows that. We also did a test and confirmed that.
+
+4. Is logarithmic scale model better (multiplicative model)?
+
+The $R^2$ for log scale is better.
+
+5. Does the sequence test show trend?
+
+Yes.
+
+6. Do any of the tests studied in class show seasonality?
+
+Yes.
