@@ -1,15 +1,4 @@
----
-title: "Volvo sales"
-output:
-  pdf_document: default
-  html_notebook: default
-  html_document:
-    df_print: paged
----
-
-Let's plot the time series of sales of Volvo. The sales are of Norway.
-
-```{r}
+## ------------------------------------------------------------------------
 suppressMessages(library(zoo))
 suppressMessages(library(forecast))
 df = read.csv('datasets_830_1554_norway_new_car_sales_by_make.csv')
@@ -19,19 +8,9 @@ N = length(sales)
 t = c(1:N)
 Q = factor(c(rep(c(1:12), N/12), c(1:(N%%12))))
 plot(sales, main = "Volvo sales", xlab = "t")
-```
 
-The rest of our work will consist in fitting some models in a window of two years and trying to predict the next month. The plots will show the original and the predicted time series.
 
-## Regression
-
-It seems reasonable to have seasonality of 12 months, so we will use it.
-
-### Seasonal dummies
-
-We will now fit a regression model that consist of trend and seasonality coefficients, using seasonal summies too. Note how we apply the two years window.
-
-```{r}
+## ------------------------------------------------------------------------
 next_step = function(t) {
   train = data.frame(
     t = t[1:24],
@@ -55,15 +34,9 @@ legend(
 )
 mape = mean(abs((prediction - sales[25:length(sales)])/sales[25:length(sales)]))
 paste("MAPE =", mape)
-```
 
-We see a reasonable MAPE and plot.
 
-### Polynomial
-
-Now we add a two degree polynomial to the last model.
-
-```{r}
+## ------------------------------------------------------------------------
 library(zoo)
 next_step = function(t) {
   train = data.frame(
@@ -88,15 +61,9 @@ legend(
 )
 mape = mean(abs((prediction - sales[25:length(sales)])/sales[25:length(sales)]))
 paste("MAPE =", mape)
-```
 
-The results are close to the last one.
 
-## Decomposition
-
-We will now use a function to decompose our series.
-
-```{r}
+## ------------------------------------------------------------------------
 next_step = function(t) {
   mod = stl(sales[t[1:25]], s.window = "periodic")
   prediction = forecast(mod, h=1)
@@ -115,19 +82,9 @@ legend(
 )
 mape = mean(abs((prediction - sales[26:length(sales)])/sales[26:length(sales)]))
 paste("MAPE =", mape)
-```
 
-Interesting results.
 
-## Exponential smoothing
-
-Now we will fit some models based on exponential smoothing.
-
-### Exponential smoothing
-
-This is the basic exponential smoothing model. It only considerates constant mean.
-
-```{r}
+## ------------------------------------------------------------------------
 next_step = function(t) {
   train = data.frame(
     t = t[1:24],
@@ -151,15 +108,9 @@ legend(
 )
 mape = mean(abs((prediction - sales[25:length(sales)])/sales[25:length(sales)]))
 paste("MAPE =", mape)
-```
 
-The MAPE is worse than before.
 
-### Holt
-
-Now we have trend in our model.
-
-```{r}
+## ------------------------------------------------------------------------
 next_step = function(t) {
   train = data.frame(
     t = t[1:24],
@@ -183,15 +134,9 @@ legend(
 )
 mape = mean(abs((prediction - sales[25:length(sales)])/sales[25:length(sales)]))
 paste("MAPE =", mape)
-```
 
-It's even worse.
 
-### Additive Holt-Winters
-
-We will now consider the complete Holt-Winters, with seasonality. This time it's additive.
-
-```{r}
+## ------------------------------------------------------------------------
 next_step = function(t) {
   train = data.frame(
     t = t[1:24],
@@ -215,15 +160,9 @@ legend(
 )
 mape = mean(abs((prediction - sales[25:length(sales)])/sales[25:length(sales)]))
 paste("MAPE =", mape)
-```
 
-We see improvements.
 
-### Multiplicative Holt-Winters
-
-Now the model is multiplicative.
-
-```{r}
+## ------------------------------------------------------------------------
 next_step = function(t) {
   train = data.frame(
     t = t[1:24],
@@ -247,6 +186,4 @@ legend(
 )
 mape = mean(abs((prediction - sales[25:length(sales)])/sales[25:length(sales)]))
 paste("MAPE =", mape)
-```
 
-It's algo good.
