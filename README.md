@@ -2,7 +2,9 @@
 
 Assignment codes for [Time Series](https://emap.fgv.br/sites/emap.fgv.br/files/u77/series_temporais.pdf) (2020, FGV).
 
-We analysed and modeled two times series. We also tried to predict the second one.
+In this repository, there is the beggining of the course. The rest of the course can be found in [this repository](https://github.com/lucasresck/time-series-2).
+
+Here, we analysed and modeled two times series. We also tried to predict the second one.
 
 ## Covid-19 deaths
 
