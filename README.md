@@ -8,7 +8,7 @@ We analysed and modeled two times series. We also tried to predict the second on
 
 We analysed Covid-19 deaths in Rio de Janeiro, Brazil, between 2020/03/20 and 2020/08/17.
 
-TODO: image
+![](images/covid.png)
 
 We tried various models to trend:
 - Linear
@@ -18,7 +18,7 @@ We tried various models to trend:
 
 We can see, for example, some results from moving average.
 
-TODO: image
+![](images/ma.png)
 
 We also modeled seasonality:
 - Deterministic
@@ -29,7 +29,7 @@ We also modeled seasonality:
 
 We modeled car sales from Volvo between 2007 and 2016.
 
-TODO: image
+<img src="images/volvo.png" alt="drawing" width="600"/>
 
 We fitted various models in a window of two years, trying to predict next day. Among them:
 - Regression with seasonal dummies
@@ -41,4 +41,4 @@ We fitted various models in a window of two years, trying to predict next day. A
 
 For example, we can see results from Multiplicative Holt-Winters:
 
-TODO: image
+<img src="images/mhw.png" alt="drawing" width="600"/>
